@@ -1,0 +1,33 @@
+{
+    "name": "phish-server",
+    "version": "1.0.0",
+    "description": "Periodically collects data from 'the spreadsheet', downloads and extracts shows, more",
+    "main": "index.js",
+    "scripts": {
+        "start": "node server/index.js",
+        "test": "webpack-dev-server",
+        "build": "npx webpack"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@babel/core": "^7.8.6",
+        "@babel/preset-env": "^7.8.6",
+        "@babel/preset-react": "^7.8.3",
+        "babel-loader": "^8.0.6",
+        "better-sqlite3": "^6.0.1",
+        "css-loader": "^3.4.2",
+        "download-file": "^0.1.5",
+        "got": "^10.6.0",
+        "immutability-helper": "^3.0.1",
+        "mime-types": "^2.1.26",
+        "music-metadata": "^6.3.4",
+        "node-sass": "^4.13.1",
+        "puppeteer": "^2.1.1",
+        "react": "^16.13.0",
+        "react-dom": "^16.13.0",
+        "react-infinite-scroll-component": "^5.0.4",
+        "sass-loader": "^7.3.1",
+        "style-loader": "^1.1.3"
+    }
+}

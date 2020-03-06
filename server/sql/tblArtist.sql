@@ -1,0 +1,4 @@
+CREATE TABLE tblArtist ( 
+    id          INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+    name        TEXT NOT NULL UNIQUE
+);
