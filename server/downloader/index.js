@@ -5,6 +5,12 @@ const child_process = require('child_process');
 const path = require('path');
 const mm = require('music-metadata');
 
+function get(url, cb) {
+    if (url.includes('https://')) return https.get(url, cb);
+    
+    return http.get(url, cb);
+}
+
 class Downloader {
     constructor(db) {
         this.db = db;
@@ -553,12 +559,12 @@ class Downloader {
                 d.stream = fs.createWriteStream(d.file_path);
                 try {
                     d.requests = [
-                        http.get(d.url, (resp) => {
+                        get(d.url, (resp) => {
                             if (resp.statusCode === 302) {
                                 // fuck you
                                 try {
                                     d.requests.push(
-                                        http.get(resp.headers.location, (redirectResp) => {
+                                        get(resp.headers.location, (redirectResp) => {
                                             this.handleResponse(d, redirectResp, complete);
                                         }).on('error', (error) => {
                                             d.stream.close();

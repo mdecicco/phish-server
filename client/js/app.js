@@ -39,6 +39,43 @@ const durationToStr = (durationInSeconds, short) => {
     return null;
 };
 
+class Track extends Component {
+    constructor (props) {
+        super(props);
+        this.state = { playing: false, paused: true };
+        this.audio = new Audio(`/api/track/${props.track.id}/stream`);
+    }
+
+    play = () => {
+        this.setState({ playing: true, paused: false })
+        this.audio.play();
+    }
+    
+    pause = () => {
+        this.setState({ playing: false, paused: true })
+        this.audio.pause();
+    }
+
+    render () {
+        const { track } = this.props;
+        const { playing } = this.state;
+        return (
+            <div className='track'>
+                <div className='track__title'>{track.title}</div>
+                <div className='track__end'>
+                    <div className='track__duration'>{durationToStr(track.duration, true)}</div>
+                    <a
+                        className='track__play'
+                        onClick={playing ? this.pause : this.play}
+                    >
+                        {playing ? 'Pause' : 'Play'}
+                    </a>
+                </div>
+            </div>
+        );
+    }
+};
+
 class ShowDetails extends Component {
     constructor (props) {
         super(props);
@@ -73,7 +110,7 @@ class ShowDetails extends Component {
         }
         
         const variation = variations[selectedVariationIdx];
-        const tracks = show.tracks[show.links[selectedVariationIdx].id];
+        const tracks = show.tracks[show.links[selectedVariationIdx].id] || [];
         const directLinks = show.links.filter(l => !l.is_folder);
         
         return (
@@ -107,17 +144,7 @@ class ShowDetails extends Component {
                     </div>
                 )}
                 <div className='details-tracks'>
-                    {tracks.map(t => {
-                        return (
-                            <div className='track' key={t.id}>
-                                <div className='track__title'>{t.title}</div>
-                                <div className='track__end'>
-                                    <div className='track__duration'>{durationToStr(t.duration, true)}</div>
-                                    <a className='track__play' href={`/api/track/${t.id}/stream`} target='_blank'>Play</a>
-                                </div>
-                            </div>
-                        );
-                    })}
+                    {tracks.map(t => (<Track key={t.id} track={t}/>))}
                 </div>
             </div>
         );

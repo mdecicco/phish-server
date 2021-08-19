@@ -231,7 +231,7 @@ class DataCollector {
                     });
                 } else {
                     let stmt = this.db.prepare(`INSERT INTO tblShow (date, date_str, raw_data, city, state, venue, source, notes, is_sbd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-                    const date = new Date(link.metadata.date.toLowerCase().replace('xx', '01').replae('xx', '01'));
+                    const date = new Date(link.metadata.date.toLowerCase().replace('xx', '01').replace('xx', '01'));
                     const info = stmt.run(
                         date == 'Invalid Date' ? null : date.getTime(),
                         link.metadata.date,

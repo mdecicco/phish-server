@@ -1,9 +1,98 @@
 <!DOCTYPE html>
-<html>
-	<head>
-		<title>Phish Spreadsheet DB</title>
-		<script src='/app.js'></script>
-	</head>
-	<body>
-	</body>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            html, body, div, span, applet, object, iframe,
+            h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+            a, abbr, acronym, address, big, cite, code,
+            del, dfn, em, img, ins, kbd, q, s, samp,
+            small, strike, strong, sub, sup, tt, var,
+            b, u, i, center,
+            dl, dt, dd, ol, ul, li,
+            fieldset, form, label, legend,
+            table, caption, tbody, tfoot, thead, tr, th, td,
+            article, aside, canvas, details, embed, 
+            figure, figcaption, footer, header, hgroup, 
+            menu, nav, output, ruby, section, summary,
+            time, mark, audio, video {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                font-size: 100%;
+                font: inherit;
+                vertical-align: baseline;
+            }
+            /* HTML5 display-role reset for older browsers */
+            article, aside, details, figcaption, figure, 
+            footer, header, hgroup, menu, nav, section {
+                display: block;
+            }
+            html, body, main {
+                margin: 0;
+                padding: 0;
+                min-width: 100%;
+                width: 100%;
+                max-width: 100%;
+                min-height: 100%;
+                height: 100%;
+                max-height: 100%;
+                line-height: 1;
+            }   
+            body {
+                overflow: hidden;
+            }
+            ol, ul {
+                list-style: none;
+            }
+            blockquote, q {
+                quotes: none;
+            }
+            blockquote:before, blockquote:after,
+            q:before, q:after {
+                content: '';
+                content: none;
+            }
+            table {
+                border-collapse: collapse;
+                border-spacing: 0;
+            }
+            * {
+                user-select: none;
+            }
+            ::-webkit-scrollbar-track {
+                -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+                box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+                background-color: transparent;
+            }
+            ::-webkit-scrollbar {
+                background-color: rgba(255, 255, 255, 0.1);
+                width: 6px;
+            }
+            ::-webkit-scrollbar-thumb {
+                background-color: orange;
+                border-radius: 4px;
+            }
+            a {
+                text-decoration: none;
+                color: white;
+                font-family: monospace;
+                font-size: 1.2em;
+                flex-grow: 1;
+                text-align: center;
+                border-bottom: 0.2em solid #5a5a5a;
+                border-style: solid;
+                height: 3em;
+            }
+            a.active {
+                border-bottom: 0.2em solid orange;
+            }
+        </style>
+        <title>Phishy</title>
+    <script defer src="/app.js"></script></head>
+    <body>
+        <main id='root'></main>
+    </body>
 </html>

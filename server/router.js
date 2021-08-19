@@ -12,10 +12,16 @@ function parseParameters(request) {
         );
         pArr.forEach(p => {
             const comps = p.split('=');
-            params[comps[0]] = comps.length === 2 ? JSON.parse(comps[1]) : null;
-            if (params[comps[0]] === 'true') params[comps[0]] = 1;
-            else if (params[comps[0]] === 'false') params[comps[0]] = 0;
-            else if (!isNaN(parseFloat(params[comps[0]]))) params[comps[0]] = parseFloat(params[comps[0]]);
+            if (comps.length === 2) {
+                try {
+                    params[comps[0]] = comps.length === 2 ? JSON.parse(comps[1]) : params[comps[0]];
+                } catch (e) {
+                    if (comps[1].trim().toLowerCase() === 'true') params[comps[0]] = 1;
+                    else if (comps[1].trim().toLowerCase() === 'false') params[comps[0]] = 0;
+                    else if (!isNaN(parseFloat(comps[1])) && parseFloat(comps[1]).toString() === comps[1].trim()) params[comps[0]] = parseFloat(comps[1]);
+                    else params[comps[0]] = comps[1];
+                }
+            } else params[comps[0]] = null;
         });
     }
     return params;
@@ -55,35 +61,82 @@ class Route {
         let route = this;
 
         let lastFoundIdx = 0;
+        const pathParams = {};
         pathComps.forEach((comp, idx) => {
-            if (idx !== 0) {
-                route.subRoutes.some((subRoute) => {
+            if (idx !== 0 && route) {
+                let foundFallback = false;
+                const found = route.subRoutes.some((subRoute) => {
                     if (subRoute.path === comp) {
                         route = subRoute;
                         lastFoundIdx = idx;
                         return true;
                     }
+
+                    if (subRoute.path.includes(':')) {
+                        pathParams[subRoute.path.substr(1).trim()] = comp;
+                        route = subRoute;
+                        lastFoundIdx = idx;
+                        foundFallback = true;
+                    }
+
                     return false;
                 });
+
+                if (!found && !foundFallback) route = null;
             }
         });
 
-        return { route, remaining: pathComps.slice(lastFoundIdx + 1) };
+        return { route, remaining: pathComps.slice(lastFoundIdx + 1), pathParams };
     }
 
     addSubRoute(path, methods) {
-        let exists = false;
-        this.subRoutes.forEach((route) => {
-            if (route.path === path) exists = true;
-        });
+        const comps = path.split('/');
+        
+        if (comps.length <= 1) {
+            let exists = false;
+            this.subRoutes.forEach((route) => {
+                if (route.path === path) exists = true;
+            });
 
-        if (!exists) {
-            let route = new Route(this, path, methods);
-            this.subRoutes.push(route);
-            return route;
-        } else console.error(`Attempted to add route that already exists at ${this.getFullPath()}`);
+            if (!exists) {
+                let route = new Route(this, path, methods);
+                this.subRoutes.push(route);
+                console.log(`Added route: ${route.getFullPath()}`);
+                return route;
+            } else console.error(`Attempted to add route that already exists at ${this.getFullPath()}`);
+        } else {
+            let r = this.addSubRoute(comps[0], {});
+            for (let i = 1;i < comps.length - 1;i++) {
+                r = r.addSubRoute(comps[i], {});
+            }
+            return r.addSubRoute(comps[comps.length - 1], methods);
+        }
 
         return null;
+    }
+
+    logRequest(request, params, routeInfo) {
+        let extra = '';
+
+        if (routeInfo && Object.keys(routeInfo.pathParams).length > 0) {
+            const printParams = [];
+            Object.keys(routeInfo.pathParams).forEach(k => {
+                printParams.push(`${k}: ${routeInfo.pathParams[k]}`);
+            });
+
+            extra += `(path: ${printParams.join(', ')})`;
+        }
+
+        if (Object.keys(params).length > 0) {
+            const printParams = [];
+            Object.keys(params).forEach(k => {
+                printParams.push(`${k}: ${params[k]}`);
+            });
+            
+            extra += `(query: ${printParams.join(', ')})`;
+        }
+
+        console.log(`${request.method} ${routeInfo && routeInfo.route ? routeInfo.route.getFullPath() : '<no route found>'} ${extra}`);
     }
 
     onRequest(request, response) {
@@ -91,7 +144,7 @@ class Route {
         const routeInfo = this.getEndpoint(request.url);
         const route = routeInfo ? routeInfo.route : null;
 
-        console.log(`${request.method} ${request.url.split('?')[0]}`);
+        this.logRequest(request, params, routeInfo);
 
         const callback = (code, result, contentType, extraHeaders, encoding) => {
             let methods = [];
@@ -125,7 +178,8 @@ class Route {
                     callback,
                     request,
                     response,
-                    remainingPath: routeInfo.remaining
+                    remainingPath: routeInfo.remaining,
+                    pathParams: routeInfo.pathParams
                 };
                 if (request.method === 'GET' && route.methods.get) route.methods.get(args);
                 else if (request.method === 'PATCH' && route.methods.patch) route.methods.patch(args);

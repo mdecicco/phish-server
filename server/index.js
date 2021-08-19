@@ -6,27 +6,37 @@ const api = require('./api');
 const DataCollector = require('./collection');
 const Downloader = require('./downloader');
 
-const root = new Route(null, null, {
+const rootRoute = {
+    get: (args) => {
+        const { response, pathParams } = args;
+        console.log(pathParams);
+        if (pathParams.file === '') {
+            response.setHeader('Content-Type', 'text/html');
+            fs.createReadStream('./dist/index.html').pipe(response);
+        } else if (pathParams.file === 'app.js') {
+            response.setHeader('Content-Type', 'application/javascript');
+            fs.createReadStream('./dist/app.js').pipe(response);
+        } else if (pathParams.file === 'favicon.ico') {
+            response.setHeader('Content-Type', 'image/x-icon');
+            fs.createReadStream('./dist/favicon.ico').pipe(response);
+        }
+    }
+};
+
+const htmlRoute = {
     get: (args) => {
         const { response } = args;
         response.setHeader('Content-Type', 'text/html');
         fs.createReadStream('./dist/index.html').pipe(response);
     }
-});
-const icon = root.addSubRoute('favicon.ico', {
-    get: (args) => {
-        const { response } = args;
-        response.setHeader('Content-Type', 'image/x-icon');
-        fs.createReadStream('./dist/favicon.ico').pipe(response);
-    }
-});
-const app = root.addSubRoute('app.js', {
-    get: (args) => {
-        const { response } = args;
-        response.setHeader('Content-Type', 'application/javascript');
-        fs.createReadStream('./dist/app.js').pipe(response);
-    }
-});
+};
+
+const root = new Route(null, null, rootRoute);
+root.addSubRoute(':file', rootRoute);
+root.addSubRoute('shows/:show_id', htmlRoute);
+root.addSubRoute('queue', htmlRoute);
+root.addSubRoute('tracks', htmlRoute);
+
 const db = new Database('./phish.db');
 const collector = new DataCollector(db);
 const downloader = new Downloader(db);
@@ -76,7 +86,7 @@ server.listen(port, (err) => {
 });
 
 var closed = false;
-process.on('exit', () => { if (closed) return; closed = true; server.close(); });
-process.on('SIGHUP', () => { if (closed) return; closed = true; server.close(); });
-process.on('SIGINT', () => { if (closed) return; closed = true; server.close(); });
-process.on('SIGTERM', () => { if (closed) return; closed = true; server.close(); });
+process.on('exit', () => { if (closed) return; closed = true; console.log('Closing server...'); server.close(); });
+process.on('SIGHUP', () => { if (closed) return; closed = true; console.log('Closing server...'); server.close(); });
+process.on('SIGINT', () => { if (closed) return; closed = true; console.log('Closing server...'); server.close(); });
+process.on('SIGTERM', () => { if (closed) return; closed = true; console.log('Closing server...'); server.close(); });
