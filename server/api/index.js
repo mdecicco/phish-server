@@ -574,8 +574,8 @@ module.exports = {
                 try {
                     let coverId = pathParams.hasOwnProperty('cover_id') ? pathParams.cover_id : null;
                     if (coverId === 'null') {
-                        const type = mime.lookup('./dist/no_cover.png');
-                        const contents = fs.readFileSync('./dist/no_cover.png', 'binary');
+                        const type = mime.lookup('./static/no_cover.png');
+                        const contents = fs.readFileSync('./static/no_cover.png', 'binary');
                         callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
                         return;
                     }

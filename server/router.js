@@ -146,6 +146,7 @@ class Route {
 
         this.logRequest(request, params, routeInfo);
 
+        let callbackFired = false;
         const callback = (code, result, contentType, extraHeaders, encoding) => {
             let methods = [];
             if (route.methods.get) methods.push('GET');
@@ -169,7 +170,8 @@ class Route {
             }
             response.writeHead(code, headers);
             response.end(contentType === 'application/json' ? JSON.stringify(result) : result, encoding);
-        }
+            callbackFired = true;
+        };
 
         const fireRequest = () => {
             if (route) {
@@ -196,7 +198,14 @@ class Route {
             }
         };
         
-        fireRequest();
+        try {
+            fireRequest();
+        } catch (e) {
+            console.error('uh oh', e);
+            if (!callbackFired) {
+                callback(500, null);
+            }
+        }
     }
 }
 

@@ -71,6 +71,24 @@ class DataCollector {
             stmt.run();
         }
     }
+
+    checkShowView () {
+        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'view' AND name = 'vwShowInfo'`);
+        const exists = stmt.get();
+        if (!exists) {
+            stmt = this.db.prepare(fs.readFileSync('./server/sql/vwShowInfo.sql', 'utf8'));
+            stmt.run();
+        }
+    }
+
+    checkTrackView () {
+        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'view' AND name = 'vwTrackInfo'`);
+        const exists = stmt.get();
+        if (!exists) {
+            stmt = this.db.prepare(fs.readFileSync('./server/sql/vwTrackInfo.sql', 'utf8'));
+            stmt.run();
+        }
+    }
     
     fileNameFromUrl (url) {
         const matches = url.match(/\/([^\/?#]+)[^\/]*$/);
@@ -185,9 +203,6 @@ class DataCollector {
     }
     
     async process_links (linkCollections) {
-        this.checkCoverArtTable();
-        this.checkShowTable();
-        this.checkLinkTable();
         const existing = this.db.prepare('SELECT url FROM tblLink').all();
         const notExistingFilter = l => !existing.find(r => r.url === l.url);
         
