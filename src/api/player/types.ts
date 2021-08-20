@@ -13,10 +13,10 @@ export enum PlayerActions {
     Stop = 'player/STOP',
     Next = 'player/NEXT',
     Prev = 'player/PREV',
+    QueueFinished = 'player/QUEUE_FINISHED',
     Seek = 'player/SEEK',
     PlayNext = 'player/PLAY_NEXT',
-    AddToQueue = 'player/ADD_TO_QUEUE',
-    QueueFinished = 'player/QUEUE_FINISHED'
+    AddToQueue = 'player/ADD_TO_QUEUE'
 };
 
 export type PlayAction = {

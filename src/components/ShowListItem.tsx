@@ -4,7 +4,8 @@ import { ContextMenu } from '@components';
 import { showDate, showLocation, serverUrl, formatDuration } from '@utils';
 import { Show } from '@types';
 import API from '@api';
-import { ContextMenuItem } from './ContextMenu';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faMicrophoneAlt } from '@fortawesome/free-solid-svg-icons';
 
 type ShowProps = {
     show: Show,
@@ -12,6 +13,7 @@ type ShowProps = {
 };
 
 const ShowDiv = styled.div`
+    position: relative;
     display: flex;
     flex-direction: row;
     cursor: pointer;
@@ -48,14 +50,25 @@ const InfoText = styled.span`
     text-overflow: ellipsis;
     overflow: hidden;
 `;
+const SBDIcon = styled.div`
+    position: absolute;
+    left: 0.5em;
+    top: 0.5em;
+    color: orange;
+`;
 
-type MenuItems = ({ label: string, onClick: () => void })[];
+type MenuItems = ({ label: string, onClick: () => void, tip?: string })[];
 const ShowListItem : React.FC<ShowProps> = (props: ShowProps) => {
-    const { queue, addToQueue, playNext } = API.Player.use();
+    const { queue, addToQueue, playNext, playNow } = API.Player.use();
     const s = props.show;
     const contextItems: MenuItems = [];
 
     if (queue.length > 0) {
+        contextItems.push({
+            label: 'Play Now',
+            tip: 'Clears Queue',
+            onClick: () => { playNow(s) }
+        });
         contextItems.push({
             label: 'Play Next',
             onClick: () => { playNext(s) }
@@ -79,6 +92,11 @@ const ShowListItem : React.FC<ShowProps> = (props: ShowProps) => {
     return (
         <ContextMenu menuId='showListItem' items={contextItems}>
             <ShowDiv onClick={props.viewDetails}>
+                {s.is_sbd ? (
+                    <SBDIcon>
+                        <FontAwesomeIcon icon={faMicrophoneAlt}/>
+                    </SBDIcon>
+                ) : null}
                 <ShowCover src={serverUrl(`/api/covers/${s.cover_art_id}`)}/>
                 <InfoDiv>
                     <InfoTitle>{s.venue ? s.venue : showLocation(s)}</InfoTitle>

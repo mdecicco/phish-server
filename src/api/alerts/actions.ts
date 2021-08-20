@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { UUID } from '@utils';
 import * as Constants from '@constants';
+import { Action } from 'redux';
 
 export function submitAlert(params: SubmitAlertParams) : SubmitAlertAction {
     return {
@@ -21,10 +22,11 @@ export function submitAlert(params: SubmitAlertParams) : SubmitAlertAction {
             title: params.title,
             message: params.message || '',
             imgUrl: params.imgUrl || null,
-            onClickAction: params.onClickAction ? JSON.parse(JSON.stringify(params.onClickAction)) : null,
+            onClickActions: params.onClickActions ? JSON.parse(JSON.stringify(params.onClickActions)) : [],
             buttons: params.buttons ? JSON.parse(JSON.stringify(params.buttons)) : [],
             fading: false,
-            hovered: false
+            hovered: false,
+            expand: params.expand ? true : false
         }
     };
 }

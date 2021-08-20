@@ -296,7 +296,8 @@ function executeQuery(db, table, params, columnInfo) {
 }
 
 function queryShows(db, params) {
-    return executeQuery(db, 'vwShowInfo', params, [
+    const p = Object.assign({ order: 'timestamp_desc' }, params);
+    return executeQuery(db, 'vwShowInfo', p, [
         { name: 'timestamp', type: FilterableType.Timestamp },
         { name: 'date', type: FilterableType.ShowDate },
         { name: 'venue', type: FilterableType.Str },
@@ -384,10 +385,12 @@ module.exports = {
                     const links = db.prepare('SELECT * FROM tblLink WHERE show_id = ?').all(showId);
                     const tracks = db.prepare('SELECT * FROM vwTrackInfo WHERE show_id = ?').all(showId);
                     const downloads = db.prepare('SELECT * FROM tblDownload WHERE show_id = ?').all(showId);
-                    links.forEach(l => {
-                        l.download = downloads.find(d => d.link_id = l.id);
-                        delete l.download.file_path;
-                    });
+                    if (downloads && downloads.length > 0) {
+                        links.forEach(l => {
+                            l.download = downloads.find(d => d.link_id = l.id);
+                            delete l.download.file_path;
+                        });
+                    }
 
 
                     const artists = db.prepare(`

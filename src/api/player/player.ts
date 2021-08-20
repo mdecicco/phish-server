@@ -231,8 +231,15 @@ class Player {
     }
 
     stop() {
-        if (this.streams.length > 0) this.userPause(0);
-        this.streams = [];
+        if (this.streams.length > 0) {
+            if (!this.streams[0].paused) this.userPause(0);
+            this.streams = [];
+        }
+        this.lastPlayPosition = 0;
+        this.lastNextTrackId = 0;
+        this.playing = false;
+        this.unbindNext();
+        this.unbindPrev();
     }
 
     next() {

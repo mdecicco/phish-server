@@ -17,8 +17,8 @@ export enum AlertType {
 /**
  * - label
  *    - Text displayed on the button.
- * - action
- *    - Action to dispatch when a user clicks on the button. Can be any redux action.
+ * - actions
+ *    - Actions to dispatch when a user clicks on the button. Can be any redux actions.
  *      If left unset, the button will dismiss the alert.
  * - buttonProps
  *    - Properties which will be passed to the <Button> component
@@ -27,7 +27,7 @@ export enum AlertType {
  */
 export type AlertButton = {
     label: string,
-    action?: Action,
+    actions?: Action[],
     buttonProps?: ButtonProps,
     closeOnClick?: boolean
 };
@@ -45,9 +45,9 @@ export type AlertButton = {
  *      0 = no automatic dismissal. Defaults to Constants.DefaultAlertDuration.
  * - imgUrl
  *    - (optional) URL of an image to display as a substitute for the info/warning/error icons
- * - onClickAction
- *    - (optional) Action to dispatch when a user clicks on the alert box itself (and not on
- *      any buttons). Can be any redux action.
+ * - onClickActions
+ *    - (optional) Actions to dispatch when a user clicks on the alert box itself (and not on
+ *      any buttons). Can be any redux actions.
  * - buttons
  *    - (optional) Array of objects which define any buttons which should be present on the alert.
  */
@@ -57,8 +57,9 @@ export type SubmitAlertParams = {
     type?: AlertType,
     duration?: number,
     imgUrl?: string,
-    onClickAction?: Action,
-    buttons?: AlertButton[]
+    onClickActions?: Action[],
+    buttons?: AlertButton[],
+    expand?: boolean
 };
 
 export type Alert = {
@@ -69,10 +70,11 @@ export type Alert = {
     title: string,
     message: string,
     imgUrl: string | null,
-    onClickAction: Action | null,
+    onClickActions: Action[],
     buttons: AlertButton[],
     fading: boolean,
-    hovered: boolean
+    hovered: boolean,
+    expand: boolean
 };
 
 export type AlertState = {

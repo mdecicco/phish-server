@@ -72,6 +72,26 @@ export function usePlayer() {
         dispatch(Actions.prevTrack());
         window.player.prev();
     }, []);
+    const playNow = React.useCallback((param: ShowTrack[] | Show) => {
+        if (param instanceof Array) {
+            dispatch(Actions.stop());
+            window.player.stop();
+            dispatch(Actions.addToQueue(param));
+            dispatch(Actions.play());
+            window.player.play();
+        }
+        else {
+            getShow(param.id, Alert, Error).then(tracks => {
+                if (tracks.length > 0) {
+                    dispatch(Actions.stop());
+                    window.player.stop();
+                    dispatch(Actions.addToQueue(tracks));
+                    dispatch(Actions.play());
+                    window.player.play();
+                }
+            });
+        }
+    }, []);
     const playNext = React.useCallback((param: ShowTrack[] | Show) => {
         if (param instanceof Array) {
             dispatch(Actions.playNext(param));
@@ -123,8 +143,8 @@ export function usePlayer() {
                     title: 'But How?',
                     message: 'There are currently tracks in the queue.',
                     buttons: [
-                        { label: 'Play Next', action: Actions.playNext(tracks), closeOnClick: true },
-                        { label: 'Add to Queue', action: Actions.addToQueue(tracks), closeOnClick: true },
+                        { label: 'Play Next', actions: [Actions.playNext(tracks)], closeOnClick: true },
+                        { label: 'Add to Queue', actions: [Actions.addToQueue(tracks)], closeOnClick: true },
                         { label: 'Cancel' }
                     ]
                 });
@@ -151,6 +171,7 @@ export function usePlayer() {
         stop,
         next,
         previous,
+        playNow,
         playNext,
         addToQueue,
         playPrompt,

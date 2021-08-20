@@ -4,6 +4,8 @@ const https = require('https');
 const child_process = require('child_process');
 const path = require('path');
 const mm = require('music-metadata');
+const env = require('../env');
+const move = require('./move');
 
 function get(url, cb) {
     if (url.includes('https://')) return https.get(url, cb);
@@ -18,6 +20,7 @@ class Downloader {
         this.downloading = [];
         this.extracting = [];
         this.maxConcurrentDownloads = 5;
+        this.addingManualShows = false;
     }
     
     start () {
@@ -274,7 +277,7 @@ class Downloader {
         }
         if (!date) return null;
         
-        const result = await new Promise((resolve, reject) => {
+        const result = await new Promise((resolve) => {
             const url = `https://api.phish.net/v3/setlists/get?showdate=${encodeURIComponent(date)}&apikey=${process.env.PDN_API_KEY}`;
             https.get(url, (resp) => {
                 let data = '';
@@ -438,9 +441,9 @@ class Downloader {
         
         const fileName = path.basename(download.file_path);
         const dirName = fileName.substr(0, fileName.lastIndexOf('.'));
-        const dirPath = `/media/storage3/media/Music/phish/${dirName}/`;
+        const dirPath = `${env.musicDestinationDir}/${dirName}/`;
         console.log(`Extracting ${fileName}`);
-        await new Promise((resolve, reject) => {
+        await new Promise((resolve) => {
             child_process.exec(`unrar x -o+ "${download.file_path}" "${dirPath}"`, async (err, out) => {
                 if (err) {
                     console.log(`\n\nExtracting ${fileName} failed`);
@@ -456,8 +459,338 @@ class Downloader {
             });
         });
     }
+
+    async processManualShow(curPath, linkData, showData, tracks) {
+        let newPath = `${env.musicDestinationDir}/${(new Date()).getTime()}_${showData.date}`;
+        if (showData.venue.length > 0) newPath += ` - ${showData.venue}`;
+        if (showData.city.length > 0) {
+            newPath += ` - ${showData.city}`;
+            if (showData.state.length > 0) newPath += `, ${showData.state}`;
+        }
+        const moved = await move(curPath, newPath);
+        if (!moved) {
+            console.error(`Failed to move ${curPath} -> ${newPath}`);
+            return false;
+        }
+
+        this.db.transaction(() => {
+            const dc = showData.date.split('-').map(c => parseInt(c, 10));
+            const date = new Date(`${dc[1]}/${dc[2]}/${dc[0]}`);
+            const show = {
+                id: null,
+                date: date == 'Invalid Date' ? null : date.getTime(),
+                date_str: `${dc[1]}/${dc[2]}/${dc[0]}`,
+                raw_data: null,
+                city: showData.city,
+                state: showData.state,
+                venue: showData.venue,
+                source: showData.source || null,
+                notes: showData.notes || null,
+                is_sbd: showData.is_sbd,
+                tracks: []
+            };
+
+            let stmt = null;
+            stmt = this.db.prepare(`
+                INSERT INTO tblShow (
+                    date,
+                    date_str,
+                    raw_data,
+                    city,
+                    state,
+                    venue,
+                    source,
+                    notes,
+                    is_sbd
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            stmt = stmt.run(
+                show.date,
+                show.date_str,
+                show.raw_data,
+                show.city,
+                show.state,
+                show.venue,
+                show.source,
+                show.notes,
+                show.is_sbd ? 1 : 0
+            );
+            show.id = stmt.lastInsertRowid;
+
     
+            const link = {
+                id: null,
+                show_id: show.id,
+                url: linkData.url,
+                is_valid: linkData.is_valid ? 1 : 0,
+                is_folder: 0
+            };
+            stmt = this.db.prepare(`
+                INSERT INTO tblLink (
+                    show_id,
+                    url,
+                    is_valid,
+                    is_folder
+                ) VALUES (?, ?, ?, ?)
+            `);
+            stmt = stmt.run(
+                link.show_id,
+                link.url,
+                link.is_valid,
+                link.is_folder
+            );
+            link.id = stmt.lastInsertRowid;
+    
+            let artwork = tracks[0].metadata.common.picture;
+            if (artwork && artwork.length > 0) {
+                const format = artwork[0].format.split('/')[1];
+                const fileName = `${newPath}/cover.${format}`;
+                const fd = fs.createWriteStream(fileName);
+                fd.write(Buffer.from(artwork[0].data.buffer));
+                fd.end();
+                artwork = fileName;
+            } else artwork = null;
+    
+            
+            let coverArtId = null;
+    
+            if (artwork) {
+                const info = this.db.prepare('INSERT INTO tblCoverArt (link_id, date, file_path) VALUES (?, ?, ?)').run(link.id, show.date, artwork);
+                coverArtId = info.lastInsertRowid;
+            }
+                
+            if (!coverArtId && date != 'Invalid Date') {
+                console.log('cover art date', date.getTime());
+                const art = this.db.prepare('SELECT id FROM tblCoverArt WHERE date = ?').get(date.getTime());
+                if (art) coverArtId = art.id;
+            }
+    
+            const showArtistIds = [];
+            const showGenreIds = [];
+            tracks.forEach((t, idx) => {
+                const track = {
+                    id: null,
+                    show_id: show.id,
+                    link_id: link.id,
+                    file_path: `${newPath}/${path.basename(t.path)}`,
+                    cover_art_id: coverArtId,
+                    track_index: idx + 1,
+                    title: path.basename(t.path),
+                    bit_rate: null,
+                    duration: null,
+                    sample_rate: null,
+                    channels: null,
+                    lossless: 0,
+                    codec: null,
+                    codec_profile: null,
+                    note: null,
+                    artists: [],
+                    genres: []
+                };
+                
+                const format = t.metadata.format;
+                const info = t.metadata.common;
+                if (format) {
+                    if (format.duration) track.duration = parseFloat(format.duration);
+                    if (format.bitrate) track.bit_rate = parseFloat(format.bitrate);
+                    if (format.sampleRate) track.sample_rate = parseFloat(format.sampleRate);
+                    if (format.numberOfChannels) track.channels = parseInt(format.numberOfChannels, 10);
+                    if (format.lossless) track.lossless = 1;
+                    if (format.codec) track.codec = format.codec;
+                    if (format.codecProfile) track.codec_profile = format.codecProfile;
+                }
+                
+                if (info) {
+                    if (info.track && info.track.no) track.track_index = parseInt(info.track.no, 10);
+                    if (info.title) track.title = info.title;
+                    if (info.artists && info.artists.length > 0) track.artists = info.artists;
+                    if (info.genre && info.genre.length > 0) track.genres = info.genre;
+                    if (info.comment) track.note = info.comment;
+                }
+    
+                stmt = this.db.prepare(`
+                    INSERT INTO tblTrack (
+                        show_id,
+                        link_id,
+                        cover_art_id,
+                        track_index,
+                        title,
+                        bit_rate,
+                        duration,
+                        sample_rate,
+                        channels,
+                        lossless,
+                        codec,
+                        codec_profile,
+                        note,
+                        file_path
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                `).run(
+                    track.show_id,
+                    track.link_id,
+                    track.cover_art_id,
+                    track.track_index,
+                    track.title,
+                    track.bit_rate,
+                    track.duration,
+                    track.sample_rate,
+                    track.channels,
+                    track.lossless,
+                    track.codec,
+                    track.codec_profile,
+                    track.note,
+                    track.file_path
+                );
+                
+                track.id = stmt.lastInsertRowid;
+    
+                track.artists.forEach(artist => {
+                    let artistId = null;
+                    const existing = this.db.prepare('SELECT * FROM tblArtist WHERE LOWER(LTRIM(RTRIM(name))) = ?').get(artist.trim().toLowerCase());
+                    if (existing) artistId = existing.id;
+                    else {
+                        stmt = this.db.prepare('INSERT INTO tblArtist (name) VALUES (?)').run(artist);
+                        artistId = stmt.lastInsertRowid;
+                    }
+                    
+                    this.db.prepare('INSERT INTO tblTrackArtist (track_id, artist_id) VALUES (?, ?)').run(track.id, artistId);
+                    if (!showArtistIds.includes(artistId)) showArtistIds.push(artistId);
+                });
+                
+                track.genres.forEach(genre => {
+                    let genreId = null;
+                    const existing = this.db.prepare('SELECT * FROM tblGenre WHERE LOWER(LTRIM(RTRIM(name))) = ?').get(genre.trim().toLowerCase());
+                    if (existing) genreId = existing.id;
+                    else {
+                        stmt = this.db.prepare('INSERT INTO tblGenre (name) VALUES (?)').run(genre);
+                        genreId = stmt.lastInsertRowid;
+                    }
+                    
+                    this.db.prepare('INSERT INTO tblTrackGenre (track_id, genre_id) VALUES (?, ?)').run(track.id, genreId);
+                    if (!showGenreIds.includes(genreId)) showGenreIds.push(genreId);
+                });
+            });
+
+            showArtistIds.forEach(id => {
+                this.db.prepare('INSERT INTO tblShowArtist (show_id, artist_id) VALUES (?, ?)').run(show.id, id);
+            });
+            
+            showGenreIds.forEach(id => {
+                this.db.prepare('INSERT INTO tblShowGenre (show_id, genre_id) VALUES (?, ?)').run(show.id, id);
+            });
+        })();
+        return true;
+    }
+    
+    async checkManualShows () {
+        if (this.addingManualShows) return;
+        this.addingManualShows = true;
+        const items = fs.readdirSync(env.manualShowDir);
+        for (let idx = 0;idx < items.length;idx++) {
+            const i = items[idx];
+            const path = `${env.manualShowDir}/${i}`;
+            if (path === env.manualShowNotAddedDir) continue;
+
+            const failItem = async (why) => {
+                console.error(`Cannot add '${i}' to DB, ${why}.`);
+                const moved = await move(path, `${env.manualShowNotAddedDir}/${i}`);
+                if (!moved) console.warn(`Failed to move '${i}' to ${env.manualShowNotAddedDir}`);
+            };
+
+            if (!fs.lstatSync(path).isDirectory()) {
+                failItem('it is not a directory containing tracks');
+                continue;
+            }
+
+            if (!fs.existsSync(`${path}/link.json`)) {
+                failItem('no link.json was found');
+                continue;
+            }
+
+            let linkData = null;
+            try {
+                linkData = JSON.parse(fs.readFileSync(`${path}/link.json`, 'utf8'));
+            } catch (e) { }
+
+            if (!linkData) {
+                failItem('failed to open or parse link.json');
+                continue;
+            }
+
+            if (!linkData.url || (linkData.is_valid !== false && linkData.is_valid !== true)) {
+                failItem('link.json must be an object with the format: { url: string, is_valid: boolean }');
+                continue;
+            }
+
+            if (!fs.existsSync(`${path}/show.json`)) {
+                failItem('no show.json was found');
+                continue;
+            }
+
+            let showData = null;
+            try {
+                showData = JSON.parse(fs.readFileSync(`${path}/show.json`, 'utf8'));
+            } catch (e) { }
+
+            if (!showData) {
+                failItem('failed to open or parse show.json');
+                continue;
+            }
+
+            if (
+                (typeof showData.date) !== 'string'
+                || (typeof showData.city) !== 'string'
+                || (typeof showData.state) !== 'string'
+                || (typeof showData.venue) !== 'string'
+                || !(showData.is_sbd === true || showData.is_sbd === false)
+            ) {
+                failItem('show.json must be an object with the format: { date: string (YYYY-MM-DD), city: string, state: string, venue: string, is_sbd: boolean, source?: string, notes?: string }');
+                continue;
+            }
+
+            if (!/^[\d]{4}[-][\d]{2}[-][\d]{2}$/.test(showData.date)) {
+                failItem('show date must be in YYYY-MM-DD format');
+                continue;
+            }
+
+            const innerItems = fs.readdirSync(path);
+            const tracks = [];
+            for (let t = 0;t < innerItems.length;t++) {
+                const name = innerItems[t];
+                if (!/.*\.(mp3)$/.test(name)) continue;
+                const tpath = `${path}/${name}`;
+                if (!fs.lstatSync(tpath).isFile()) continue;
+                try {
+                    const metadata = await mm.parseFile(tpath, { native: true });
+                    tracks.push({
+                        path: tpath,
+                        metadata
+                    });
+                } catch (e) {
+                    failItem(`track ${name} is corrupt or malformed`);
+                    console.error(e);
+                    return;
+                }
+            }
+
+            if (tracks.length === 0) {
+                failItem('No tracks found');
+                continue;
+            }
+
+            const result = await this.processManualShow(path, linkData, showData, tracks);
+            if (!result) {
+                failItem('Failed to process show');
+                continue;
+            }
+        }
+
+        this.addingManualShows = false;
+    }
+
     async check () {
+        this.checkManualShows();
+
         if (this.downloading.length === this.maxConcurrentDownloads) return;
         this.checkTable('tblDownload');
         this.checkTable('tblLinkMetadata');
@@ -523,7 +856,7 @@ class Downloader {
                         const info = stmt.run(
                             l.show_id,
                             l.id,
-                            `/media/storage3/downloads/phish/${(new Date()).getTime()}_${filename}`
+                            `${env.downloadDir}/${(new Date()).getTime()}_${filename}`
                         );
                         const downloadId = info.lastInsertRowid;
                         const download = this.db.prepare(`

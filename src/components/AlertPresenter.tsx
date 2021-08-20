@@ -143,7 +143,7 @@ const AlertPresenter : React.FC = () => {
                                 onMouseEnter={() => alertMouseOver(a.uuid)}
                                 onMouseLeave={() => alertMouseOut(a.uuid)}
                                 onClick={() => {
-                                    if (a.onClickAction) dispatch(a.onClickAction);
+                                    a.onClickActions.forEach(dispatch);
                                 }}
                             >
                                 <Flex mode={Flex.Mode.Horizontal}>
@@ -167,8 +167,8 @@ const AlertPresenter : React.FC = () => {
                                             labelStyle={{ color: 'rgba(100, 64, 0, 0.73)' }}
                                             onClick={e => {
                                                 e.stopPropagation();
-                                                if (b.action) {
-                                                    dispatch(b.action);
+                                                if (b.actions) {
+                                                    b.actions.forEach(dispatch);
                                                     if (b.closeOnClick) animateRemoveAlert(a.uuid);
                                                 } else animateRemoveAlert(a.uuid);
                                             }}

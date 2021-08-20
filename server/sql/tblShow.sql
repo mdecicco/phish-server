@@ -3,7 +3,7 @@ CREATE TABLE tblShow (
     pdn_id          INTEGER,
     date            DATE,
     date_str        TEXT NOT NULL,
-    raw_data        TEXT NOT NULL,
+    raw_data        TEXT,
     city            TEXT,
     state           TEXT,
     venue           TEXT,

@@ -23,6 +23,15 @@ import {
     Pause
 } from './styled/PlayerInterface';
 
+const getClientX = (e: TouchEvent | MouseEvent | (React.TouchEvent<HTMLDivElement> & React.MouseEvent<HTMLDivElement, MouseEvent>)) : number | null => {
+    if ((e as MouseEvent).clientX) return (e as MouseEvent).clientX;
+
+    const te = e as TouchEvent;
+    if (te.touches.length > 0) return te.touches[0].clientX;
+
+    return null;
+};
+
 const PlayerInterface : React.FC = () => {
     const Player = API.Player.use();
     const [seeking, setSeeking] = React.useState(false);
@@ -36,8 +45,8 @@ const PlayerInterface : React.FC = () => {
         const track = Player.currentTrack;
 
         const onSeek = (e: TouchEvent | MouseEvent) => {
-            if (seeking && progressRef.current) {
-                const clientX = (e as MouseEvent).clientX ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
+            const clientX = getClientX(e);
+            if (seeking && progressRef.current && clientX !== null) {
                 const ele = progressRef.current;
                 const rect = ele.getBoundingClientRect();
                 const frac = (clientX - rect.left) / (rect.width);
@@ -47,7 +56,8 @@ const PlayerInterface : React.FC = () => {
         
         const onEndSeeking = (e: TouchEvent | MouseEvent) => {
             if (seeking) {
-                if (progressRef.current) {
+                const clientX = getClientX(e);
+                if (progressRef.current && clientX !== null) {
                     const clientX = (e as MouseEvent).clientX ? (e as MouseEvent).clientX : (e as TouchEvent).touches[0].clientX;
                     const ele = progressRef.current;
                     const rect = ele.getBoundingClientRect();
@@ -66,6 +76,11 @@ const PlayerInterface : React.FC = () => {
             document.addEventListener('touchend', onEndSeeking);
             document.addEventListener('touchcancel', onEndSeeking);
         } else {
+            document.removeEventListener('mousemove', onSeek);
+            document.removeEventListener('touchmove', onSeek);
+            document.removeEventListener('mouseup', onEndSeeking);
+            document.removeEventListener('touchend', onEndSeeking);
+            document.removeEventListener('touchcancel', onEndSeeking);
             eventsBound.current = false;
         }
 
@@ -96,11 +111,13 @@ const PlayerInterface : React.FC = () => {
     lastPercent.current = percent;
 
     const onStartSeeking = (e: React.TouchEvent<HTMLDivElement> & React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-        const clientX = e.clientX ? e.clientX : e.touches[0].clientX;
-        const ele = e.target as HTMLDivElement;
-        const rect = ele.getBoundingClientRect();
-        const frac = (e.clientX - rect.left) / (rect.width);
-        Player.seek(frac * track.duration);
+        const clientX = getClientX(e);
+        if (clientX !== null) {
+            const ele = e.target as HTMLDivElement;
+            const rect = ele.getBoundingClientRect();
+            const frac = (clientX - rect.left) / (rect.width);
+            Player.seek(frac * track.duration);
+        }
         setSeeking(true);
     };
 

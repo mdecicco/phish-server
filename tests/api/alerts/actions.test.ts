@@ -25,21 +25,21 @@ describe('Test submitAlert', () => {
     });
 
     it('Does not contain pointers to input data', () => {
-        const dummyAction = submitAlert({ title: '' });
+        const dummyActions = [submitAlert({ title: '' })];
         const dummyButtonProps = { confirm: true };
 
         const { alert } = submitAlert({
             title: '',
-            onClickAction: dummyAction,
+            onClickActions: dummyActions,
             buttons: [{
                 label: '',
-                action: dummyAction,
+                actions: dummyActions,
                 buttonProps: dummyButtonProps
             }]
         });
 
-        expect(alert.onClickAction === dummyAction).toBeFalsy();
-        expect(alert.buttons[0].action === dummyAction).toBeFalsy();
+        expect(alert.onClickActions === dummyActions).toBeFalsy();
+        expect(alert.buttons[0].actions === dummyActions).toBeFalsy();
         expect(alert.buttons[0].buttonProps === dummyButtonProps).toBeFalsy();
     });
 });
@@ -56,19 +56,19 @@ describe('Test updateAlert', () => {
     it('Does not contain pointers to input data', () => {
         const { alert } = submitAlert({
             title: '',
-            onClickAction: submitAlert({ title: '' }),
+            onClickActions: [submitAlert({ title: '' })],
             buttons: [{
                 label: '',
-                action: submitAlert({ title: '' }),
+                actions: [submitAlert({ title: '' })],
                 buttonProps: { confirm: true }
             }]
         });
         const action = updateAlert(alert);
         expect(action.alert === alert).toBeFalsy();
-        expect(action.alert.onClickAction === alert.onClickAction).toBeFalsy();
+        expect(action.alert.onClickActions === alert.onClickActions).toBeFalsy();
         expect(action.alert.buttons === alert.buttons).toBeFalsy();
         expect(action.alert.buttons[0] === alert.buttons[0]).toBeFalsy();
-        expect(action.alert.buttons[0].action === alert.buttons[0].action).toBeFalsy();
+        expect(action.alert.buttons[0].actions === alert.buttons[0].actions).toBeFalsy();
         expect(action.alert.buttons[0].buttonProps === alert.buttons[0].buttonProps).toBeFalsy();
     });
 
@@ -117,8 +117,8 @@ describe('Test Submit Action', () => {
 describe('Test Update Action', () => {
     const { Reduce, submitAlert, updateAlert, AlertType } = API.Alerts;
     it('Update action updates alert values', () => {
-        const submitAction = submitAlert({ title: '' });
-        let state = Reduce(undefined, submitAction);
+        const submitActions = [submitAlert({ title: '' })];
+        let state = Reduce(undefined, submitActions[0]);
 
         // Can't test timeoutId because in node environment the result of setTimeout is
         // an object with a circular structure, but in a browser environment the result
@@ -131,11 +131,11 @@ describe('Test Update Action', () => {
             // timeoutId: { $set: dummyTimeoutId },
             message: { $set: 'message' },
             imgUrl: { $set: 'url' },
-            onClickAction: { $set: submitAction },
+            onClickActions: { $set: submitActions },
             buttons: {
                 $push: [{
                     label: 'label',
-                    action: submitAction
+                    actions: submitActions
                 }]
             },
             fading: { $set: true },
@@ -149,10 +149,10 @@ describe('Test Update Action', () => {
         // expect(state.alerts[0].timeoutId).toEqual(dummyTimeoutId);
         expect(state.alerts[0].message).toBe('message');
         expect(state.alerts[0].imgUrl).toBe('url');
-        expect(state.alerts[0].onClickAction).toEqual(submitAction);
+        expect(state.alerts[0].onClickActions).toEqual(submitActions);
         expect(state.alerts[0].buttons).toEqual([{
             label: 'label',
-            action: submitAction,
+            action: submitActions,
             buttonProps: undefined
         }]);
         expect(state.alerts[0].fading).toEqual(true);

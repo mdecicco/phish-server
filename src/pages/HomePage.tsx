@@ -40,7 +40,7 @@ const HomePage : React.FC = () => {
                 pageStart={0}
                 loadMore={() => loadMore()}
                 hasMore={shows.length < totalCount}
-                threshold={250}
+                threshold={2000}
                 loading={loading}
                 initialScroll={listScroll}
                 onScroll={e => {

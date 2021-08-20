@@ -33,63 +33,6 @@ class DataCollector {
         console.log(data);
     }
     
-    checkCoverArtTable () {
-        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tblCoverArt'`);
-        const exists = stmt.get();
-        if (!exists) {
-            stmt = this.db.prepare(fs.readFileSync('./server/sql/tblCoverArt.sql', 'utf8'));
-            stmt.run();
-        }
-    }
-    
-    checkShowTable () {
-        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tblShow'`);
-        const exists = stmt.get();
-        if (!exists) {
-            stmt = this.db.prepare(fs.readFileSync('./server/sql/tblShow.sql', 'utf8'));
-            stmt.run();
-        }
-    }
-    
-    checkLinkTable () {
-        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tblLink'`);
-        const exists = stmt.get();
-        if (!exists) {
-            stmt = this.db.prepare(fs.readFileSync('./server/sql/tblLink.sql', 'utf8'));
-            stmt.run();
-            
-            stmt = this.db.prepare('ALTER TABLE tblCoverArt ADD CONSTRAINT fk_link_id FOREIGN KEY (link_id) REFERENCES tblLink(id)');
-            stmt.run();
-        }
-    }
-    
-    checkDownloadTable () {
-        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tblDownload'`);
-        const exists = stmt.get();
-        if (!exists) {
-            stmt = this.db.prepare(fs.readFileSync('./server/sql/tblDownload.sql', 'utf8'));
-            stmt.run();
-        }
-    }
-
-    checkShowView () {
-        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'view' AND name = 'vwShowInfo'`);
-        const exists = stmt.get();
-        if (!exists) {
-            stmt = this.db.prepare(fs.readFileSync('./server/sql/vwShowInfo.sql', 'utf8'));
-            stmt.run();
-        }
-    }
-
-    checkTrackView () {
-        let stmt = this.db.prepare(`SELECT name FROM sqlite_master WHERE type = 'view' AND name = 'vwTrackInfo'`);
-        const exists = stmt.get();
-        if (!exists) {
-            stmt = this.db.prepare(fs.readFileSync('./server/sql/vwTrackInfo.sql', 'utf8'));
-            stmt.run();
-        }
-    }
-    
     fileNameFromUrl (url) {
         const matches = url.match(/\/([^\/?#]+)[^\/]*$/);
         let out = null;
