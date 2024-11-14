@@ -12,8 +12,8 @@ function addResource(db, resource) {
 
 module.exports = function() {
     return new Promise((resolve, reject) => {
-        const createDb = !fs.existsSync('./phish.db');
-        const db = new Database('./phish.db');
+        const createDb = !fs.existsSync('/data/system/phish.db');
+        const db = new Database('/data/system/phish.db');
         
         if (createDb) {
             addResource(db, 'tblShow');
@@ -33,7 +33,7 @@ module.exports = function() {
         }
         
         // back up the DB before doing anything
-        db.backup('./phish.db.backup').then(() => {
+        db.backup('/data/system/phish.db.backup').then(() => {
             resolve(db);
         }).catch((err) => {
             console.error(err);

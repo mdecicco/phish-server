@@ -64,7 +64,7 @@ const ContextMenu : React.FC<ContextMenuProps> = (props: ContextMenuProps) => {
             return React.cloneElement(child, {
                 ref,
                 'data-context-menu-id': props.menuId
-            });
+            } as any);
         }
     });
     

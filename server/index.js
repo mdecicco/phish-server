@@ -55,7 +55,7 @@ function setupRoutes () {
 function startBackupInterval (db) {
     const backup = () => {
         console.log('Backing up DB');
-        db.backup('./phish.db.backup').then(() => {
+        db.backup('/data/phish.db.backup').then(() => {
             console.log('Successfully backed up DB');
         }).catch((err) => {
             console.log('Error backing up DB\n', err);

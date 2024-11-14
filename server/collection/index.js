@@ -68,7 +68,7 @@ class DataCollector {
                 await page.exposeFunction('send_result', resolve);
                 await page.evaluate(code);
             });
-            fs.writeFileSync('./last_scrape.json', JSON.stringify(result));
+            fs.writeFileSync('/data/system/last_scrape.json', JSON.stringify(result));
             await browser.close();
             this.progress({ current: 1, total: 1, percent: 100, status: 'Finished scraping spreadsheet' });
             if (result.error) console.error(`Failed to acquire spreadsheet data:\n${result.error}`);
@@ -97,7 +97,7 @@ class DataCollector {
 
         let cachedResults = {};
         try {
-            const cache = fs.readFileSync('resolve_cache.json', { encoding: 'utf-8' });
+            const cache = fs.readFileSync('/data/system/resolve_cache.json', { encoding: 'utf-8' });
             if (cache) cachedResults = JSON.parse(cache);
         } catch (err) {
             cachedResults = {};
@@ -128,9 +128,9 @@ class DataCollector {
 
                         cachedResults[link.url] = data;
                         try {
-                            fs.writeFileSync('./resolve_cache.json', JSON.stringify(cachedResults), { encoding: 'utf-8' });
+                            fs.writeFileSync('/data/system/resolve_cache.json', JSON.stringify(cachedResults), { encoding: 'utf-8' });
                         } catch (err) {
-                            console.log('Failed to write to ./resolve_cache.json');
+                            console.log('Failed to write to /data/system/resolve_cache.json');
                         }
                     }
                 } catch (err) {
@@ -139,9 +139,9 @@ class DataCollector {
 
                     cachedResults[link.url] = null;
                     try {
-                        fs.writeFileSync('./resolve_cache.json', JSON.stringify(cachedResults), { encoding: 'utf-8' });
+                        fs.writeFileSync('/data/system/resolve_cache.json', JSON.stringify(cachedResults), { encoding: 'utf-8' });
                     } catch (err) {
-                        console.log('Failed to write to ./resolve_cache.json');
+                        console.log('Failed to write to /data/system/resolve_cache.json');
                     }
                     continue;
                 }
@@ -250,7 +250,7 @@ class DataCollector {
             })();
         });
 
-        await this.db.backup('./phish.db.backup');
+        await this.db.backup('/data/system/phish.db.backup');
     }
 };
 
