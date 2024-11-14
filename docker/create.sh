@@ -1,0 +1,1 @@
+docker run -v /media/storage3/media/Music/phish:/data -p 6169:6169 --restart unless-stopped --name phish-server mdecicco8/phish-server:latest

@@ -1,0 +1,1 @@
+docker build -t mdecicco8/phish-server .
