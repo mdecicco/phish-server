@@ -445,7 +445,7 @@ class Downloader {
         const dirPath = `${env.musicDestinationDir}/${dirName}/`;
         console.log(`Extracting ${fileName}`);
         await new Promise((resolve) => {
-            child_process.exec(`7z -y x "${download.file_path}" -o"${dirPath}"`, async (err, out) => {
+            child_process.exec(`unrar x -o+ "${download.file_path}" "${dirPath}"`, async (err, out) => {
                 if (err) {
                     console.log(`\n\nExtracting ${fileName} failed`);
                     console.log(out);
