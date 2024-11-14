@@ -64,7 +64,7 @@ class DataCollector {
             page.on("pageerror", function (err) { console.log("Page error: " + err.toString()); });
             page.on("error", function (err) { console.log("Page error: " + err.toString()); });
             await page.goto('https://docs.google.com/spreadsheets/d/1yAXu83gJBz08cW5OXoqNuN1IbvDXD2vCrDKj4zn1qmU/pubhtml#');
-            await page.screenshot({ path: 'last_scrape_frame.png' });
+            await page.screenshot({ path: '/data/system/last_scrape_frame.png' });
             console.log('Page loaded in puppeteer...');
             const result = await new Promise(async (resolve, reject) => {
                 const code = fs.readFileSync('./server/collection/puppet.js', 'utf8');
