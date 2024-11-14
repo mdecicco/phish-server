@@ -55,7 +55,10 @@ class DataCollector {
         try {
             console.log('Scraping the spreadsheet...');
             this.progress({ current: 0, total: 1, percent: 0, status: 'Scraping spreadsheet' });
-            const browser = await puppeteer.launch();
+            const browser = await puppeteer.launch({
+                executablePath: '/usr/bin/chromium-browser',
+                args: ['--no-sandbox', '--disable-dev-shm-usage']
+            });
             const page = await browser.newPage();
             console.log('Puppeteer launched');
             page.on("pageerror", function (err) { console.log("Page error: " + err.toString()); });
