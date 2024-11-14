@@ -1,6 +1,7 @@
 export { default as Page } from './Page';
 export { default as ShowTile } from './ShowTile';
 export { default as ShowListItem } from './ShowListItem';
+export { default as TrackListItem } from './TrackListItem';
 export { default as Flex } from './Flex';
 export { default as Portal } from './Portal';
 export { default as InfiniteScroll } from './InfiniteScroll';

@@ -1,5 +1,8 @@
 const mime = require('mime-types');
 const fs = require('fs');
+const path = require('path');
+const sharp = require('sharp');
+const resizeImg = require('resize-img');
 const { values } = require('lodash');
 
 const FilterableType = {
@@ -296,7 +299,7 @@ function executeQuery(db, table, params, columnInfo) {
 }
 
 function queryShows(db, params) {
-    const p = Object.assign({ order: 'timestamp_desc' }, params);
+    const p = Object.assign({ order: 'timestamp_desc', track_count_gt: 0 }, params);
     return executeQuery(db, 'vwShowInfo', p, [
         { name: 'timestamp', type: FilterableType.Timestamp },
         { name: 'date', type: FilterableType.ShowDate },
@@ -317,9 +320,10 @@ function queryShows(db, params) {
 }
 
 function queryTracks(db, params) {
-    return executeQuery(db, 'vwTrackInfo', params, [
+    const data = executeQuery(db, 'vwTrackInfo', params, [
         { name: 'timestamp', type: FilterableType.Timestamp },
         { name: 'date', type: FilterableType.ShowDate },
+        { name: 'added_on', type: FilterableType.Datetime },
         { name: 'venue', type: FilterableType.Str },
         { name: 'city', type: FilterableType.Str },
         { name: 'state', type: FilterableType.Str },
@@ -330,13 +334,46 @@ function queryTracks(db, params) {
         { name: 'sample_rate', type: FilterableType.Num },
         { name: 'bit_rate', type: FilterableType.Num },
         { name: 'channels', type: FilterableType.Num },
+        { name: 'is_sbd', type: FilterableType.Bool },
         { name: 'lossless', type: FilterableType.Bool },
         { name: 'title', type: FilterableType.Str },
         { name: 'note', type: FilterableType.Str },
         { name: 'codec', type: FilterableType.Str },
+        { name: 'artists', type: FilterableType.Str },
+        { name: 'genres', type: FilterableType.Str },
         { name: 'codec_profile', type: FilterableType.Str },
         { name: 'show_metadata', type: FilterableType.Str } // useful for general searches
     ]);
+
+    data.results.forEach(r => {
+        const artists = [];
+        const artist_ids = r.artist_ids ? r.artist_ids.split(',').map(i => parseInt(i, 10)) : [];
+        const artist_names = r.artists ? r.artists.split('&&').map(a => a.trim()) : [];
+        artist_ids.forEach((id, idx) => {
+            artists.push({
+                id,
+                name: artist_names[idx]
+            });
+        });
+
+        delete r.artist_ids;
+        r.artists = artists;
+
+        const genres = [];
+        const genre_ids = r.genre_ids ? r.genre_ids.split(',').map(i => parseInt(i, 10)) : [];
+        const genre_names = r.genres ? r.genres.split('&&').map(g => g.trim()) : [];
+        genre_ids.forEach((id, idx) => {
+            genres.push({
+                id,
+                name: genre_names[idx]
+            });
+        });
+
+        delete r.genre_ids;
+        r.genres = genres;
+    });
+
+    return data;
 }
 
 function queryCovers(db, params) {
@@ -360,6 +397,7 @@ module.exports = {
                         error: null,
                     }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         results: [],
                         error: err.toString()
@@ -425,6 +463,7 @@ module.exports = {
                     
                     callback(200, { show, error: null }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         show: [],
                         error: err.toString()
@@ -449,6 +488,7 @@ module.exports = {
                         error: null,
                     }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         results: [],
                         error: err.toString()
@@ -465,24 +505,43 @@ module.exports = {
                         return;
                     }
 
-                    const track = db.prepare('SELECT * FROM tblTrack WHERE id = ?').get(trackId)
+                    const track = db.prepare('SELECT * FROM vwTrackInfo WHERE id = ?').get(trackId)
                     if (!track) {
                         callback(404, null);
                         return;
                     }
                     
-                    const artists = db.prepare('SELECT * FROM tblArtist WHERE EXISTS (SELECT track_id FROM tblTrackArtist WHERE track_id = ? AND artist_id = tblArtist.id)').all(trackId);
-                    if (artists) track.artists = artists;
-                    else track.artists = [];
-                    
-                    const genres = db.prepare('SELECT * FROM tblGenre WHERE EXISTS (SELECT track_id FROM tblTrackGenre WHERE track_id = ? AND genre_id = tblGenre.id)').all(trackId);
-                    if (genres) track.genres = genres;
-                    else track.genres = [];
+                    const artists = [];
+                    const artist_ids = track.artist_ids.split(',').map(i => parseInt(i, 10));
+                    const artist_names = track.artists.split('&&').map(a => a.trim());
+                    artist_ids.forEach((id, idx) => {
+                        artists.push({
+                            id,
+                            name: artist_names[idx]
+                        });
+                    });
+
+                    delete track.artist_ids;
+                    track.artists = artists;
+
+                    const genres = [];
+                    const genre_ids = track.genre_ids.split(',').map(i => parseInt(i, 10));
+                    const genre_names = track.genres.split('&&').map(g => g.trim());
+                    genre_ids.forEach((id, idx) => {
+                        genres.push({
+                            id,
+                            name: genre_names[idx]
+                        });
+                    });
+
+                    delete track.genre_ids;
+                    track.genres = genres;
                     
                     delete track.file_path;
                     
                     callback(200, { track, error: null }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         track: null,
                         error: err.toString()
@@ -499,19 +558,11 @@ module.exports = {
                         return;
                     }
 
-                    const track = db.prepare('SELECT * FROM tblTrack WHERE id = ?').get(trackId)
+                    const track = db.prepare('SELECT file_path FROM tblTrack WHERE id = ?').get(trackId)
                     if (!track) {
                         callback(404, null);
                         return;
                     }
-                    
-                    const artists = db.prepare('SELECT * FROM tblArtist WHERE EXISTS (SELECT track_id FROM tblTrackArtist WHERE track_id = ? AND artist_id = tblArtist.id)').all(trackId);
-                    if (artists) track.artists = artists;
-                    else track.artists = [];
-                    
-                    const genres = db.prepare('SELECT * FROM tblGenre WHERE EXISTS (SELECT track_id FROM tblTrackGenre WHERE track_id = ? AND genre_id = tblGenre.id)').all(trackId);
-                    if (genres) track.genres = genres;
-                    else track.genres = [];
                     
                     const type = mime.lookup(track.file_path);
                     const contents = fs.readFileSync(track.file_path, 'binary');
@@ -540,6 +591,7 @@ module.exports = {
                     callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
                     return;
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         track: null,
                         error: err.toString()
@@ -565,6 +617,7 @@ module.exports = {
                         error: null,
                     }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         results: [],
                         error: err.toString()
@@ -572,20 +625,21 @@ module.exports = {
                 }
             }
         }).addSubRoute(':cover_id', {
-            get: (args) => {
-                const { callback, pathParams } = args;
+            get: async (args) => {
+                const { callback, pathParams, params } = args;
                 try {
+                    const noCoverFile = params.thumb ? './static/no_cover-thumb.png' : './static/no_cover.png';
                     let coverId = pathParams.hasOwnProperty('cover_id') ? pathParams.cover_id : null;
                     if (coverId === 'null') {
-                        const type = mime.lookup('./static/no_cover.png');
-                        const contents = fs.readFileSync('./static/no_cover.png', 'binary');
+                        const type = mime.lookup(noCoverFile);
+                        const contents = fs.readFileSync(noCoverFile, 'binary');
                         callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
                         return;
                     }
 
                     coverId = parseInt(coverId, 10);
                     if (!coverId || isNaN(coverId)) {
-                        callback(404, null);
+                        callback(400, 'Cover id malformed');
                         return;
                     } 
 
@@ -594,11 +648,73 @@ module.exports = {
                         callback(404, null);
                         return;
                     }
+
+                    if (!fs.existsSync(cover.file_path)) {
+                        console.log(`Cover art file not found <${cover.file_path}>`);
+                        const type = mime.lookup(noCoverFile);
+                        const contents = fs.readFileSync(noCoverFile, 'binary');
+                        callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                        return;
+                    }
+                    
+                    if (!fs.statSync(cover.file_path).isFile()) {
+                        console.log(`Cover art path does not refer to a file <${cover.file_path}>`);
+                        const type = mime.lookup(noCoverFile);
+                        const contents = fs.readFileSync(noCoverFile, 'binary');
+                        callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                        return;
+                    }
                     
                     const type = mime.lookup(cover.file_path);
-                    const contents = fs.readFileSync(cover.file_path, 'binary');
-                    callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+
+                    if (params.thumb) {
+                        const p = path.dirname(cover.file_path);
+                        const e = path.extname(cover.file_path);
+                        const f = path.basename(cover.file_path, e);
+                        const thumb_path = `${p}/${f}-thumb${e}`;
+
+                        if (fs.existsSync(thumb_path)) {
+                            const contents = fs.readFileSync(thumb_path, 'binary');
+                            callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                        } else {
+                            console.log(thumb_path);
+                            let err = null;
+                            try {
+                                // try with sharp first
+                                const contents = await sharp(cover.file_path).resize(128, 128).toBuffer();
+                                fs.writeFile(thumb_path, contents, (err) => {
+                                    if (err) {
+                                        console.warn(`Failed to cache thumbnail <${thumb_path}>`);
+                                    }
+                                });
+                                callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                            } catch (e) {
+                                err = e;
+                            }
+
+                            if (err) {
+                                let contents = fs.readFileSync(cover.file_path);
+                                try {
+                                    contents = await resizeImg(contents, { width: 128, height: 128 });
+                                    fs.writeFile(thumb_path, contents, (err) => {
+                                        if (err) {
+                                            console.warn(`Failed to cache thumbnail <${thumb_path}>`);
+                                        }
+                                    });
+                                    callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                                } catch (e) {
+                                    console.error('[sharp]', err);
+                                    console.error('[resize-img]', e);
+                                    callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                                }
+                            }
+                        }
+                    } else {
+                        const contents = fs.readFileSync(cover.file_path, 'binary');
+                        callback(200, contents, type, { 'Content-Length': contents.length }, 'binary');
+                    }
                 } catch (err) {
+                    console.error(err);
                     callback(500, err.toString(), 'text/plain');
                 }
             }
@@ -613,6 +729,7 @@ module.exports = {
                         error: null
                     }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, {
                         downloads: [],
                         error: err.toString()
@@ -646,6 +763,7 @@ module.exports = {
                     downloading.forEach(d => { delete d.file_path; });
                     callback(200, { all, downloading, extracting, error: null }, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, { all: [], downloading: [], extracting: [], error: err }, 'application/json');
                 }
             }
@@ -658,6 +776,7 @@ module.exports = {
                 try {
                     callback(200, params, 'application/json');
                 } catch (err) {
+                    console.error(err);
                     callback(500, err, 'text/plain');
                 }
             }

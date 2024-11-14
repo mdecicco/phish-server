@@ -125,11 +125,7 @@ const QueuePage : React.FC = () => {
     }
 
     return (
-        <Page
-            style={{ display: 'flex', flexDirection: 'column' }}
-            noMargin
-            noRootContextMenu
-        >
+        <Page noMargin noRootContextMenu flex='column'>
             <Navigator/>
             <TrackList>
                 {tracks.map(t => (

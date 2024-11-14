@@ -74,6 +74,7 @@ export function usePlayer() {
     }, []);
     const playNow = React.useCallback((param: ShowTrack[] | Show) => {
         if (param instanceof Array) {
+            console.log('play now', param);
             dispatch(Actions.stop());
             window.player.stop();
             dispatch(Actions.addToQueue(param));
@@ -142,6 +143,7 @@ export function usePlayer() {
                 Alert({
                     title: 'But How?',
                     message: 'There are currently tracks in the queue.',
+                    expand: true,
                     buttons: [
                         { label: 'Play Next', actions: [Actions.playNext(tracks)], closeOnClick: true },
                         { label: 'Add to Queue', actions: [Actions.addToQueue(tracks)], closeOnClick: true },

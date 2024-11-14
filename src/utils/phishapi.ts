@@ -3,8 +3,8 @@ export function serverUrl(url: string) {
     return url;
 }
 
-export function coverArtUrl (coverId: number) : string {
-    return serverUrl(`/api/covers/${coverId}`);
+export function coverArtUrl (coverId: number, thumbnail: boolean) : string {
+    return serverUrl(`/api/covers/${coverId}${thumbnail ? '?thumb=1' : ''}`);
 }
 
 export function trackStreamUrl (trackId: number) : string {

@@ -157,11 +157,14 @@ class Route {
             if (route.methods.delete) methods.push('DELETE');
 
             var headers = {};
+            var output = contentType === 'application/json' ? JSON.stringify(result) : result;
+
             headers["Access-Control-Allow-Origin"] = "*";
             headers["Access-Control-Allow-Methods"] = methods.join(', ');
             headers["Access-Control-Allow-Credentials"] = false;
             headers["Access-Control-Max-Age"] = '86400'; // 24 hours
             headers["Access-Control-Allow-Headers"] = "Authorization, X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept";
+            
             if (contentType) headers['Content-Type'] = contentType;
             if (extraHeaders instanceof Object) {
                 for (var prop in extraHeaders) {
@@ -169,7 +172,7 @@ class Route {
                 }
             }
             response.writeHead(code, headers);
-            response.end(contentType === 'application/json' ? JSON.stringify(result) : result, encoding);
+            response.end(output, encoding);
             callbackFired = true;
         };
 

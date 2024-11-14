@@ -63,6 +63,7 @@ table {
 ::-webkit-scrollbar {
     background-color: rgba(255, 255, 255, 0.1);
     width: 6px;
+    display: none;
 }
 ::-webkit-scrollbar-thumb {
     background-color: orange;

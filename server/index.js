@@ -15,14 +15,20 @@ function setupRoutes () {
             const { response, pathParams } = args;
             console.log(pathParams);
             if (pathParams.file === '') {
-                response.setHeader('Content-Type', 'text/html');
-                fs.createReadStream('./dist/index.html').pipe(response);
+                const file = './dist/index.html';
+                const stat = fs.statSync(file);
+                response.writeHead(200, { 'Content-Type': 'text/html', 'Content-Length': stat.size });
+                fs.createReadStream(file).pipe(response, { end: true });
             } else if (/bundle.([0-9a-fA-F]{20}).js/g.test(pathParams.file)) {
-                response.setHeader('Content-Type', 'application/javascript');
-                fs.createReadStream(`./dist/${pathParams.file}`).pipe(response);
+                const file = `./dist/${pathParams.file}`;
+                const stat = fs.statSync(file);
+                response.writeHead(200, { 'Content-Type': 'application/javascript' });
+                fs.createReadStream(file, { bufferSize: 64 * 1024 }).pipe(response, { end: true });
             } else if (pathParams.file === 'favicon.ico') {
-                response.setHeader('Content-Type', 'image/x-icon');
-                fs.createReadStream('./static/favicon.ico').pipe(response);
+                const file = './static/favicon.ico';
+                const stat = fs.statSync(file);
+                response.writeHead(200, { 'Content-Type': 'image/x-icon', 'Content-Length': stat.size });
+                fs.createReadStream(file).pipe(response, { end: true });
             }
         }
     };
@@ -30,8 +36,10 @@ function setupRoutes () {
     const htmlRoute = {
         get: (args) => {
             const { response } = args;
-            response.setHeader('Content-Type', 'text/html');
-            fs.createReadStream('./dist/index.html').pipe(response);
+            const file = './dist/index.html';
+            const stat = fs.statSync(file);
+            response.writeHead(200, { 'Content-Type': 'text/html', 'Content-Length': stat.size });
+            fs.createReadStream(file).pipe(response, { end: true });
         }
     };
     

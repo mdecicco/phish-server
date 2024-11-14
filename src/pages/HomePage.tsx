@@ -8,6 +8,18 @@ const ShowList = styled.div`
     display: flex;
     flex-flow: column;
 `;
+const NoShowsContainer = styled.div`
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+`;
+const NoShows = styled.span`
+    text-align: center;
+    color: #959595;
+    font-size: 1.5em;
+    font-family: monospace;
+`;
 
 const HomePage : React.FC = () => {
     const { loadMore, shows, loading, totalCount, setFilters, listScroll, setScroll, filters } = API.Shows.use();
@@ -28,6 +40,26 @@ const HomePage : React.FC = () => {
             }
         }
     }, []);
+    
+    if (shows.length === 0) {
+        return (
+            <Page
+                style={{ display: 'flex', flexDirection: 'column' }}
+                noMargin
+                noRootContextMenu
+            >
+                <Navigator/>
+                <FilterDialog
+                    onSearchChanged={search => { setFilters({ search }); }}
+                    search={filters.search}
+                />
+                <NoShowsContainer>
+                    <NoShows>Nope. Sorry. Nothin'</NoShows>
+                </NoShowsContainer>
+                <PlayerInterface/>
+            </Page>
+        );
+    }
 
     return (
         <Page noMargin noRootContextMenu flex='column'>

@@ -287,7 +287,7 @@ class Downloader {
                         resolve(JSON.parse(data).response.data);
                     } catch (error) {
                         console.log(`Failed to get PDN data for ${date}`);
-                        console.log(error);
+                        console.error(error);
                         resolve(null);
                     }
                 });
@@ -409,6 +409,7 @@ class Downloader {
                             error: null
                         });
                     } catch (err) {
+                        console.error(err);
                         trackMetadata.push({
                             file: filePath,
                             metadata: null,
@@ -423,7 +424,7 @@ class Downloader {
             fs.unlinkSync(download.file_path);
         } catch (err) {
             console.log(`Failed to process ${fileName}`);
-            console.log(err);
+            console.error(err);
             this.db.prepare(`UPDATE tblDownload SET extract_error = ? WHERE id = ?`).run(err, download.id);
         }
     }
@@ -710,7 +711,9 @@ class Downloader {
             let linkData = null;
             try {
                 linkData = JSON.parse(fs.readFileSync(`${path}/link.json`, 'utf8'));
-            } catch (e) { }
+            } catch (e) {
+                console.error(e);
+            }
 
             if (!linkData) {
                 failItem('failed to open or parse link.json');
@@ -730,7 +733,7 @@ class Downloader {
             let showData = null;
             try {
                 showData = JSON.parse(fs.readFileSync(`${path}/show.json`, 'utf8'));
-            } catch (e) { }
+            } catch (e) { console.error(e); }
 
             if (!showData) {
                 failItem('failed to open or parse show.json');
@@ -906,6 +909,7 @@ class Downloader {
                                         })
                                     );
                                 } catch (err) {
+                                    console.error(err);
                                     d.stream.close();
                                     fs.unlinkSync(d.file_path);
                                     this.db.prepare(`UPDATE tblDownload SET download_error = ? WHERE id = ?`).run(err.toString(), d.id);
@@ -919,6 +923,7 @@ class Downloader {
                     ];
                     this.downloading.push(d);
                 } catch (err) {
+                    console.error(err);
                     d.stream.close();
                     fs.unlinkSync(d.file_path);
                     this.db.prepare(`UPDATE tblDownload SET download_error = ? WHERE id = ?`).run(err.toString(), d.id);

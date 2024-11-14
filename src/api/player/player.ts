@@ -190,6 +190,7 @@ class Player {
     play() {
         const { queue, queueIndex } = this.state();
         if (queue.length <= queueIndex) return;
+        console.log(queue, queueIndex);
 
         if (this.streams.length > 0) {
             if (this.streams[0].paused) {
@@ -202,7 +203,7 @@ class Player {
                         artist: track.artists.map(a => a.name).join(', '),
                         album: `${showDate(track)} - ${showLocation(track)}`,
                         artwork: [
-                            { src: coverArtUrl(track.cover_art_id) }
+                            { src: coverArtUrl(track.cover_art_id, false) }
                         ]
                     });
                 }
@@ -218,7 +219,7 @@ class Player {
                     artist: track.artists.map(a => a.name).join(', '),
                     album: `${showDate(track)} - ${showLocation(track)}`,
                     artwork: [
-                        { src: coverArtUrl(track.cover_art_id) }
+                        { src: coverArtUrl(track.cover_art_id, false) }
                     ]
                 });
             }

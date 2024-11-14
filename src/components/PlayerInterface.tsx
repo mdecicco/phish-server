@@ -17,10 +17,7 @@ import {
     VAlignCenter,
     Row,
     PlayerControls,
-    ControlButton,
-    ArrowRight,
-    ArrowLeft,
-    Pause
+    ControlButton
 } from './styled/PlayerInterface';
 
 const getClientX = (e: TouchEvent | MouseEvent | (React.TouchEvent<HTMLDivElement> & React.MouseEvent<HTMLDivElement, MouseEvent>)) : number | null => {
@@ -103,8 +100,10 @@ const PlayerInterface : React.FC = () => {
 
     const extraStyle: React.CSSProperties = {};
     if (isMobile()) {
-        extraStyle.minHeight = '10em';
-        extraStyle.maxHeight = '10em';
+        if (!navigator.userAgent.toLowerCase().includes('android')) {
+            extraStyle.minHeight = '10em';
+            extraStyle.maxHeight = '10em';
+        }
     }
 
     const Progress = seeking ? PlayerProgressBarInner : PlayerProgressBarInnerAnimated;
@@ -124,7 +123,7 @@ const PlayerInterface : React.FC = () => {
     return (
         <PlayerDiv style={extraStyle}>
             <Row>
-                <PlayerCoverArt src={coverArtUrl(track.cover_art_id)}/>
+                <PlayerCoverArt src={coverArtUrl(track.cover_art_id, true)}/>
                 <PlayerRightPane>
                     <PlayerTrackInfo>
                         <PlayerTrackInfoDate>{showDate(track)}</PlayerTrackInfoDate>
@@ -160,15 +159,25 @@ const PlayerInterface : React.FC = () => {
                         pointerEvents: Player.queueIndex === 0 ? 'none' : 'all'
                     }}
                 >
-                    <ArrowLeft style={{ left: '-0.4em', top: '0.25em' }}/>
-                    <ArrowLeft style={{ left: '-0.1em', top: '-0.3em' }}/>
+                    <svg height="1em" fillRule="evenodd" clipRule="evenodd" fill='currentColor' viewBox='0,0,24,24'>
+                        <path d="M23 24l-18-12 18-12v24zm-19-24v24h-1v-24h1zm2.803 12l15.197 10.132v-20.263l-15.197 10.131z"/>
+                    </svg>
                 </ControlButton>
                 <ControlButton onClick={Player.playing ? Player.pause : Player.play}>
                     {Player.playing ? (
-                        <Pause/>
+                        <svg height="1em" fillRule="evenodd" clipRule="evenodd" fill='currentColor' viewBox='0,0,24,24'>
+                            <path d="M10 24h-6v-24h6v24zm10 0h-6v-24h6v24zm-11-23h-4v22h4v-22zm10 0h-4v22h4v-22z"/>
+                        </svg>
                     ) : (
-                        <ArrowRight/>
+                        <svg height="1em" fillRule="evenodd" clipRule="evenodd" fill='currentColor' viewBox='0,0,24,24'>
+                            <path d="M26 12l-22 12v-24l22 12zm-21 10.315l18.912-10.315-18.912-10.315v20.63z"/>
+                        </svg>
                     )}
+                </ControlButton>
+                <ControlButton onClick={Player.stop}>
+                    <svg height="1em" fillRule="evenodd" clipRule="evenodd" fill='currentColor' viewBox='0,0,24,24'>
+                        <path d="M22 2v20h-20v-20h20zm1-1h-22v22h22v-20z"></path>
+                    </svg>
                 </ControlButton>
                 <ControlButton
                     onClick={Player.next}
@@ -177,8 +186,9 @@ const PlayerInterface : React.FC = () => {
                         pointerEvents: Player.queueIndex === Player.queue.length - 1 ? 'none' : 'all'
                     }}
                 >
-                    <ArrowRight style={{ left: '-0.4em', top: '0.25em' }}/>
-                    <ArrowRight style={{ left: '-0.05em', top: '-0.3em' }}/>
+                    <svg height="1em" fillRule="evenodd" clipRule="evenodd" fill='currentColor' viewBox='0,0,24,24'>
+                        <path d="M1 24l18-12-18-12v24zm19-24v24h1v-24h-1zm-2.803 12l-15.197 10.132v-20.263l15.197 10.131z"/>
+                    </svg>
                 </ControlButton>
             </PlayerControls>
         </PlayerDiv>

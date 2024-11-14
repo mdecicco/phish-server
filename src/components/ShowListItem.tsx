@@ -1,7 +1,7 @@
 import * as React from 'react';
 import styled from 'styled-components';
 import { ContextMenu } from '@components';
-import { showDate, showLocation, serverUrl, formatDuration } from '@utils';
+import { showDate, showLocation, serverUrl, formatDuration, coverArtUrl } from '@utils';
 import { Show } from '@types';
 import API from '@api';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -90,14 +90,14 @@ const ShowListItem : React.FC<ShowProps> = (props: ShowProps) => {
     });
 
     return (
-        <ContextMenu menuId='showListItem' items={contextItems}>
+        <ContextMenu menuId={`sli-${s.id}`} items={contextItems}>
             <ShowDiv onClick={props.viewDetails}>
                 {s.is_sbd ? (
                     <SBDIcon>
                         <FontAwesomeIcon icon={faMicrophoneAlt}/>
                     </SBDIcon>
                 ) : null}
-                <ShowCover src={serverUrl(`/api/covers/${s.cover_art_id}`)}/>
+                <ShowCover src={coverArtUrl(s.cover_art_id, true)}/>
                 <InfoDiv>
                     <InfoTitle>{s.venue ? s.venue : showLocation(s)}</InfoTitle>
                     <InfoText>{showDate(s)}</InfoText>

@@ -119,7 +119,7 @@ const AlertPresenter : React.FC = () => {
                     const cVOff = verticalOffset;
                     verticalOffset += Constants.AlertHeight + 10;
                     let height = Constants.AlertHeight;
-                    if (a.buttons.length > 0 && a.hovered) {
+                    if (a.buttons.length > 0 && (a.hovered || a.expand)) {
                         verticalOffset += Constants.ButtonRowHeight + Constants.ButtonRowMargin;
                         height += Constants.ButtonRowHeight + Constants.ButtonRowMargin;
                     }

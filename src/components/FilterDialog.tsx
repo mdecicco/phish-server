@@ -124,7 +124,7 @@ const FilterDialog : React.FC<FilterDialogProps> = (props: FilterDialogProps) =>
                     if (props.onSearchChanged) props.onSearchChanged(search);
                 }}
                 value={search}
-                placeholder='Separate terms with commas'
+                placeholder={`Separate terms with commas: 'Providence, RI, 1994'`}
             />
             <FilterIcon style={{ opacity: open ? 0 : 1  }}>
                 <FontAwesomeIcon icon={faFilter}/>

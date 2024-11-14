@@ -2,8 +2,8 @@ import styled from 'styled-components';
 
 export const PlayerDiv = styled.div`
     width: 100vw;
-    min-height: 8em;
-    max-height: 8em;
+    min-height: 8.1em;
+    max-height: 8.1em;
     display: flex;
     flex-direction: column;
     background-color: rgba(0, 0, 0, 0.2);
@@ -94,42 +94,9 @@ export const ControlButton = styled.div`
     flex-direction: column;
     justify-content: center;
     transition: background-color 125ms;
+    color: orange;
 
     :active {
         background-color: rgba(255, 255, 255, 0.1);
     }
-`;
-export const ArrowRight = styled.div`
-    border-bottom: 1px solid orange;
-    border-right: 1px solid orange;
-    width: 0.5em;
-    height: 0.5em;
-    position: relative;
-    left: -0.25em;
-    top: -0.05em;
-    transform: rotate(-45deg);
-    margin-left: 1.3em;
-    font-family: monospace;
-`;
-export const ArrowLeft = styled.div`
-    border-bottom: 1px solid orange;
-    border-right: 1px solid orange;
-    width: 0.5em;
-    height: 0.5em;
-    position: relative;
-    left: -0.25em;
-    top: -0.05em;
-    transform: rotate(135deg);
-    margin-left: 1.6em;
-    font-family: monospace;
-`;
-export const Pause = styled.div`
-    border-left: 1px solid orange;
-    border-right: 1px solid orange;
-    width: 0.6em;
-    height: 1.0em;
-    position: relative;
-    left: 1.1em;
-    top: -0.05em;
-    font-family: monospace;
 `;

@@ -45,13 +45,16 @@ export type ShowTrack = {
     codec_profile: string,
     duration: number,
     lossless: boolean,
+    is_sbd: boolean,
     note: string | null,
     title: string,
     city: string,
     date: string,
+    added_on: string,
     state: string | null,
     timestamp: number,
-    venue: string
+    venue: string,
+    show_metadata: string,
 };
 
 export type Show = {

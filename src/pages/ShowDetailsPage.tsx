@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Page, PlayerInterface, Navigator } from '@components';
+import { Page, PlayerInterface, Navigator, Button } from '@components';
 import { ErrorPage, LoadingPage } from '@pages';
 import styled, { keyframes } from 'styled-components';
 import { useHistory, useParams } from 'react-router-dom';
@@ -181,7 +181,7 @@ const ShowDetailsPage : React.FC = () => {
     if (loading) return (<LoadingPage/>);
     if (!show) return (<ErrorPage message={error || 'Error: Error not found'}/>);
 
-    const tracks = linkId > 0 ? show.tracks[linkId] : [];
+    const links = show.links.filter(l => !l.is_folder && show.tracks.hasOwnProperty(l.id));
     return (
         <Page
             style={{ display: 'flex', flexDirection: 'column' }}
@@ -201,22 +201,39 @@ const ShowDetailsPage : React.FC = () => {
                     <InfoText>{show.is_sbd ? 'Soundboard' : ''}</InfoText>
                     <InfoNotes>{show.notes}</InfoNotes>
                 </DetailsHeaderInfo>
-                <CoverArt src={coverArtUrl(show.cover_art_id)}/>
+                <CoverArt src={coverArtUrl(show.cover_art_id, false)}/>
             </DetailsHeader>
             <TrackList>
-                <TrackRow style={{ backgroundColor: '#4d4d4d' }} onClick={() => { playPrompt(tracks); }}>
-                    <TrackInfo>
-                        <TrackTitle>Play All</TrackTitle>
-                        <TrackDuration>{formatDuration(show.duration)}</TrackDuration>
-                    </TrackInfo>
-                </TrackRow>
-                {tracks.map(t => (
-                    <Track
-                        key={t.id}
-                        track={t}
-                        currentTrack={currentTrack}
-                        playPrompt={playPrompt}
-                    />
+                {links.map((l, idx) => (
+                    <React.Fragment key={l.id}>
+                        <TrackRow style={{ backgroundColor: '#4d4d4d' }} onClick={() => { playPrompt(show.tracks[l.id]); }}>
+                            <TrackInfo>
+                                <TrackTitle style={{ lineHeight: '23px' }}>Link {idx + 1}</TrackTitle>
+                                <TrackDuration>
+                                    <Button
+                                        label='Download'
+                                        buttonStyle={{ padding: '0px 16px 1px 16px' }}
+                                        labelStyle={{ fontFamily: 'monospace' }}
+                                        onClick={e => { e.preventDefault(); window.open(l.url); }}
+                                    />
+                                </TrackDuration>
+                            </TrackInfo>
+                        </TrackRow>
+                        <TrackRow style={{ backgroundColor: '#4d4d4d' }} onClick={() => { playPrompt(show.tracks[l.id]); }}>
+                            <TrackInfo>
+                                <TrackTitle>Play All</TrackTitle>
+                                <TrackDuration>{formatDuration(show.tracks[l.id].reduce((p, c) => p + c.duration, 0.0))}</TrackDuration>
+                            </TrackInfo>
+                        </TrackRow>
+                        {show.tracks[l.id].map(t => (
+                            <Track
+                                key={t.id}
+                                track={t}
+                                currentTrack={currentTrack}
+                                playPrompt={playPrompt}
+                            />
+                        ))}
+                    </React.Fragment>
                 ))}
             </TrackList>
             <PlayerInterface/>

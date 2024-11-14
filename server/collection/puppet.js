@@ -45,7 +45,7 @@ async function process_links(links, resolve) {
         {
             collection: 'mediafire_good',
             test: (url) => {
-                return url.includes('mediafire') && (url.includes('/file/') || url.includes('/download/'));
+                return url.includes('mediafire') && (url.includes('/file_premium/') || url.includes('/file/') || url.includes('/download/'));
             }
         },
         {

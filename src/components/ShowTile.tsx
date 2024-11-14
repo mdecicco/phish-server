@@ -1,6 +1,6 @@
 import * as React from 'react';
 import styled from 'styled-components';
-import { showDate, showLocation, serverUrl } from '@utils';
+import { showDate, showLocation, serverUrl, coverArtUrl } from '@utils';
 import { Show } from '@types';
 
 type ShowProps = {
@@ -71,7 +71,7 @@ const ShowTile : React.FC<ShowProps> = (props: ShowProps) => {
     const s = props.show;
     return (
         <ShowDiv>
-            <CoverImg src={serverUrl(`/api/covers/${s.cover_art_id}`)}/>
+            <CoverImg src={coverArtUrl(s.cover_art_id, true)}/>
             <ShowInfo>
                 <ShowInfoInner>
                     <ShowDate>{showDate(s)}</ShowDate>

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render } from 'react-dom';
 import { Provider } from 'react-redux';
 import API, { PlayerType } from '@api';
-import { HomePage, QueuePage, ShowDetailsPage } from '@pages';
+import { HomePage, QueuePage, ShowDetailsPage, TrackPage } from '@pages';
 import {
     BrowserRouter as Router,
     Route
@@ -27,6 +27,9 @@ render(
             </Route>
             <Route exact path='/shows/:id'>
                 <ShowDetailsPage/>
+            </Route>
+            <Route exact path='/tracks'>
+                <TrackPage/>
             </Route>
             <Route exact path='/queue'>
                 <QueuePage/>
