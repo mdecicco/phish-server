@@ -64,7 +64,7 @@
         "@types/wicg-mediasession": "^1.1.2",
         "better-sqlite3": "^11.5.0",
         "concurrently": "^6.2.1",
-        "react-router-dom": "^5.2.0",
+        "react-router-dom": "^7.5.2",
         "styled-components": "^5.3.0",
         "uuid": "^3.4.0"
     }
